@@ -1,5 +1,7 @@
 # EzTimeZone
 
+**Live: https://eztimezone.netlify.app**
+
 Compare the time across up to five timezones on one shared, scrollable timeline.
 Drag any strip and all of them move together; the playhead marks the moment
 you have picked, and each row reads it in its own local time.
@@ -110,6 +112,41 @@ open across a deploy will start 404ing on chunks.
 The worker is not registered in development, and `registerSW.ts` actively
 unregisters any worker it finds there, so a stale one from a preview build
 cannot end up serving the dev server.
+
+## Deploying
+
+Hosted on Netlify at https://eztimezone.netlify.app. The build is a static
+directory with no server component, and share links keep their state in the URL
+hash, so no redirect or rewrite rules are needed.
+
+```bash
+npm run build
+npx netlify deploy --prod --dir=dist
+```
+
+Or drag `dist/` onto https://app.netlify.com/drop.
+
+`public/_headers` carries the two header overrides the deploy needs. It lives in
+`public/` rather than the repo root so Vite copies it into `dist/`, which means
+it applies to a drag-and-drop deploy of that folder and not only to a git-based
+build:
+
+- **`manifest.webmanifest` gets `application/manifest+json`.** Netlify does not
+  recognise the extension and otherwise serves it as `application/octet-stream`.
+  Browsers are lenient enough to parse it anyway, so the symptom is not a broken
+  page — it is an audit failure and an install prompt you cannot rely on.
+- **`/assets/*` gets a year and `immutable`.** Those filenames are
+  content-hashed, so the bytes behind a URL can never change; Netlify's default
+  spends a revalidation round trip on every visit for nothing.
+
+Netlify's defaults are already right for `index.html` and `sw.js`
+(`max-age=0, must-revalidate`), which is what lets a new deploy be picked up
+promptly, so neither is overridden.
+
+**Deploying to a subpath needs more than this.** GitHub Pages project sites
+serve from `/<repo>/`, and while the manifest uses relative URLs, the service
+worker's precache paths and the script tags come from Vite's `base`. Without
+setting it you get a worker that 404s on every precached file.
 
 ## Not done yet
 

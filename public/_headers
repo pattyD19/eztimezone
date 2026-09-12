@@ -1,0 +1,14 @@
+# Netlify reads this from the root of the published directory. It lives in
+# public/ so Vite copies it into dist/, which means it applies to a drag-and-drop
+# deploy of that folder as well as a git-based build.
+
+/manifest.webmanifest
+  # Netlify does not know the .webmanifest extension and falls back to
+  # application/octet-stream, which is not what the spec asks for.
+  Content-Type: application/manifest+json; charset=utf-8
+
+/assets/*
+  # Filenames here are content-hashed, so the bytes behind a given URL can never
+  # change. Netlify's default (max-age=0, must-revalidate) spends a round trip
+  # revalidating them on every visit for nothing.
+  Cache-Control: public, max-age=31536000, immutable
