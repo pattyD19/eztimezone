@@ -78,7 +78,7 @@ describe('when storage works', () => {
   it('survives malformed JSON', () => {
     const map = withStorage();
     map.set('zones', '{oh no');
-    expect(readJson('zones', (v): v is unknown => true)).toBeNull();
+    expect(readJson('zones', (_v): _v is unknown => true)).toBeNull();
   });
 
   it('does not throw on a value that cannot be serialised', () => {
@@ -93,7 +93,7 @@ describe('when touching storage throws', () => {
   it('reads as null instead of taking the app down', () => {
     withThrowingStorage();
     expect(readString('k')).toBeNull();
-    expect(readJson('k', (v): v is unknown => true)).toBeNull();
+    expect(readJson('k', (_v): _v is unknown => true)).toBeNull();
   });
 
   it('swallows writes', () => {

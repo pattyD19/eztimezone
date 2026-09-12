@@ -335,6 +335,7 @@ describe('idling', () => {
     stepFrames();
     // Once settled, nothing is queued: the live playhead ticks on a timer.
     expect(frameQueue).toHaveLength(0);
+    expect(store.getFollowing()).toBe(true);
   });
 
   it('wakes on that timer and keeps the clock current', () => {
