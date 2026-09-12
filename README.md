@@ -181,6 +181,14 @@ service worker still has cached. A trailing `+` on the commit means the build
 was made from a tree with uncommitted changes, so the stamp can never quietly
 claim to be a commit it is not.
 
+A clean build is reproducible: its timestamp comes from the commit rather than
+the clock, so building the same commit twice produces byte-identical output.
+Stamping the wall clock instead changes the content hash on every build, which
+makes every client re-download JS that did not change, and means two builds of
+one commit cannot be compared to confirm what is deployed. A dirty tree gets the
+wall clock, since such a build is not reproducible whatever timestamp it
+carries.
+
 **Deploying to a subpath needs more than this.** GitHub Pages project sites
 serve from `/<repo>/`, and while the manifest uses relative URLs, the service
 worker's precache paths and the script tags come from Vite's `base`. Without
