@@ -11,7 +11,9 @@ beyond React — the IANA timezone database comes from `Intl` in the browser.
 npm install
 npm run dev        # http://localhost:5173
 npm test           # the time engine
-npm run build      # typecheck + production bundle
+npm run build      # typecheck + production bundle, including the service worker
+npm run preview    # serve the build; the service worker only runs here, not in dev
+npm run icons      # regenerate the PWA icons (they are committed)
 ```
 
 ## Layout
@@ -52,9 +54,38 @@ spring and drops one each autumn. `ticks.ts` cuts the window into
 constant-offset segments first, and lays a uniform grid inside each. The tests
 in `ticks.test.ts` pin this down; keep them passing.
 
+## Offline and installability
+
+The app is installable and works fully offline. `build/pwa.ts` runs at build
+time and emits `dist/sw.js` with a precache list baked in, because Vite
+content-hashes asset names and because `public/` is copied verbatim rather than
+bundled. The cache version is a hash of that list, so it changes exactly when
+the cached file set does.
+
+Caching strategy:
+
+- **Navigations** go network-first, falling back to the precached shell. A
+  deploy is therefore picked up on the next load, and the app still opens with
+  no network.
+- **Own-origin assets** are cache-first, which is always correct because their
+  filenames are content-hashed.
+- **Google Fonts** are stale-while-revalidate in a separate cache, so type
+  renders offline. Cross-origin font responses are opaque and cannot be
+  inspected; that is the accepted trade. Self-hosting the two families would
+  remove the third-party dependency entirely if that ever matters.
+
+The worker calls `skipWaiting()` and takes over immediately. That is safe *only*
+because the app builds to a single bundle with no lazily-imported chunks, so a
+running page can never request a file the new version has renamed. **If code
+splitting is introduced, switch to the wait-for-reload pattern** or a page held
+open across a deploy will start 404ing on chunks.
+
+The worker is not registered in development, and `registerSW.ts` actively
+unregisters any worker it finds there, so a stale one from a preview build
+cannot end up serving the dev server.
+
 ## Not done yet
 
-- PWA manifest and service worker.
 - DST-change warnings (deferred deliberately).
 - iOS home-screen widget. Note that WidgetKit renders static snapshots — iOS 17+
   allows `Button`/`Toggle` via AppIntent but has no drag or scroll gesture, so
