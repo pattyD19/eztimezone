@@ -254,6 +254,14 @@ layout or gesture handling will not be caught by CI.
 rather than a DOM, which makes inertia and easing deterministic instead of
 dependent on how fast the suite happens to run.
 
+Coverage thresholds are set **per target** rather than globally, and CI fails if
+one drops. A single project-wide number would fight the strategy above instead
+of enforcing it: since the UI is untested on purpose, adding a component would
+drag the global figure down and break the build, pressuring whoever added it
+into shallow DOM tests or into lowering the bar again. Naming the parts that
+must stay covered — `src/time/**`, `TimelineStore`, `share.ts`, `storage.ts` —
+says the same thing without punishing growth elsewhere.
+
 ## CI
 
 `.github/workflows/ci.yml` runs typecheck, tests and build on pushes to `main`

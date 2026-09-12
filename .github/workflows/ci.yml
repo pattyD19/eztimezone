@@ -32,5 +32,20 @@ jobs:
       # Kept as separate steps so a failure says which thing broke, rather
       # than "the build failed".
       - run: npm run typecheck
-      - run: npm test
+
+      # Runs the suite and enforces the per-target coverage thresholds in
+      # vite.config.ts. Netlify deliberately runs plain `npm test` instead, so
+      # a coverage dip cannot stand between a fix and production.
+      - run: npm run coverage
+
       - run: npm run build
+
+      # Uploaded even on failure: when a threshold trips, this is the report
+      # that says which lines stopped being covered.
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+          if-no-files-found: ignore

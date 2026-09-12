@@ -84,6 +84,39 @@ export default defineConfig({
       // Type-only declarations and the entry point have nothing to execute.
       exclude: ['src/**/*.test.ts', 'src/vite-env.d.ts', 'src/main.tsx'],
       reporter: ['text', 'html'],
+
+      /**
+       * Thresholds are per-target, and there is deliberately no global one.
+       *
+       * A single project-wide number would fight the testing strategy rather
+       * than enforce it: the UI is left to browser verification on purpose, so
+       * adding a component would drag the global figure down and fail the
+       * build. That pressures whoever added it into writing shallow DOM tests
+       * or lowering the bar again, and neither makes the app more correct.
+       *
+       * Naming the parts that must stay covered says the same thing honestly,
+       * and keeps growth in the untested areas from setting off an alarm about
+       * the tested ones. Each is set a little below where it stands, so churn
+       * is tolerated and a real regression is not.
+       */
+      thresholds: {
+        // The timezone and interval maths: where a mistake is both easy to make
+        // and invisible on screen.
+        'src/time/**': { statements: 97, branches: 90, functions: 100, lines: 97 },
+
+        // Two real bugs have already lived here.
+        'src/state/TimelineStore.ts': {
+          statements: 90,
+          branches: 78,
+          functions: 90,
+          lines: 92,
+        },
+
+        // Small files that parse input the app does not control, and must never
+        // throw. At 100% today; growing them without tests is the regression.
+        'src/lib/share.ts': { statements: 100, branches: 90, functions: 100, lines: 100 },
+        'src/lib/storage.ts': { statements: 100, branches: 95, functions: 100, lines: 100 },
+      },
     },
   },
 });
