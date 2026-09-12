@@ -164,10 +164,10 @@ export function offsetLabel(offset: number): string {
   return `GMT${sign}${h}${m ? `:${pad2(m)}` : ''}`;
 }
 
-/** `"9h 30m ahead"`, `"3h behind"`, `"same time as you"`. */
-export function deltaLabel(offset: number, homeOffset: number): string {
-  const diff = (offset - homeOffset) / MINUTE;
-  if (diff === 0) return 'same time as you';
+/** `"9h 30m ahead"`, `"3h behind"`, `"same time"` — a gap on its own. */
+export function gapLabel(deltaMs: number): string {
+  const diff = deltaMs / MINUTE;
+  if (diff === 0) return 'same time';
   const direction = diff < 0 ? 'behind' : 'ahead';
   const total = Math.abs(diff);
   const h = Math.floor(total / 60);
@@ -176,4 +176,10 @@ export function deltaLabel(offset: number, homeOffset: number): string {
   if (h) parts.push(`${h}h`);
   if (m) parts.push(`${m}m`);
   return `${parts.join(' ')} ${direction}`;
+}
+
+/** `"9h 30m ahead"`, `"3h behind"`, `"same time as you"`. */
+export function deltaLabel(offset: number, homeOffset: number): string {
+  const gap = gapLabel(offset - homeOffset);
+  return gap === 'same time' ? 'same time as you' : gap;
 }

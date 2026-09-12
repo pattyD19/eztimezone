@@ -75,6 +75,37 @@ through refs; React only re-renders when the *painted window* moves, which is
 rare. Re-rendering five rows of a few hundred ticks per frame is not viable, so
 `useFrame` callbacks must never call `setState`.
 
+## Daylight saving
+
+Two separate jobs, and it is worth keeping them apart.
+
+**Being correct** is handled in `ticks.ts`. The visible span is cut into
+constant-offset segments — a coarse scan brackets each change, then a binary
+search narrows it to the millisecond — and grids are laid inside each segment.
+So a spring-forward never invents a 2am tick, a fall-back draws 1am twice, and
+each is one real hour of screen either way. Zones transition independently, so
+the three weeks each spring when New York is 4h from London rather than 5h just
+fall out of the offsets.
+
+**Being noticed** is `transitions.ts` plus `DstNotice`. Correct is not the same
+as noticed: the mistake people make is agreeing a recurring time and not
+spotting that the gap moves an hour in three weeks. Every boundary between the
+segments already computed *is* such a change, so surfacing it costs nothing new.
+
+- A banner warns about changes within a fortnight of the playhead. Shorter and
+  it would be useless — at the default scale the visible span is about a day, so
+  you would only learn of a change by scrolling onto it.
+- A `+1h` marker sits on the strip at the exact instant, on the row that moves.
+- When the *home* zone is the one changing, the banner says every gap shifts
+  rather than naming one, because they all move together.
+- Dates are given in the zone that is changing, not the reader's. A transition
+  at 01:00 UTC on Sunday is still Saturday evening in New York, and telling a
+  New Yorker that "London changes on Saturday" names a date no Londoner would
+  recognise for their own clocks.
+
+Shifts are not assumed to be whole hours — Lord Howe Island moves by thirty
+minutes, and the tests pin that.
+
 **Local time is not a continuous function of the instant.** Offsets are not
 whole hours (Kolkata +05:30, Kathmandu +05:45, Chatham +12:45), so each row's
 hour boundaries land at different x positions and the grid cannot be shared.

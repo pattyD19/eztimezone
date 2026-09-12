@@ -4,6 +4,7 @@ import { TimelineContext } from './state/timelineContext';
 import { useZones } from './state/useZones';
 import { useClockPref } from './state/usePrefs';
 import { readShareState } from './lib/share';
+import { DstNotice } from './ui/DstNotice';
 import { Timeline } from './ui/Timeline';
 import { Toolbar } from './ui/Toolbar';
 import { VersionStamp } from './ui/VersionStamp';
@@ -31,6 +32,8 @@ export function App() {
           Drag <b>any</b> strip sideways — all five move together. The amber line is the
           moment you’ve picked. Pinch or scroll to zoom.
         </p>
+
+        <DstNotice zones={zones} home={home} />
 
         <Timeline zones={zones} home={home} use24Hour={use24Hour} onRemove={remove} />
 

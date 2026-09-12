@@ -1,6 +1,7 @@
 import { memo, useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { HOUR, deltaLabel, formatClock, formatDate, hourLabel, offsetAt, offsetLabel, wallFromOffset } from '../time/format';
 import { buildStrip, labelInterval } from '../time/ticks';
+import { formatSignedShift } from '../time/transitions';
 import { zoneLabel } from '../time/zones';
 import { useFrame, useTimelineWindow } from '../state/hooks';
 import { useStripTransform } from '../state/useStripTransform';
@@ -20,7 +21,10 @@ interface StripProps {
  * the painted window moves, never on the frames in between.
  */
 const Strip = memo(function Strip({ tz, anchor, end, pxPerHour, use24Hour }: StripProps) {
-  const { ticks, bands } = useMemo(() => buildStrip(tz, anchor, end), [tz, anchor, end]);
+  const { ticks, bands, segments } = useMemo(
+    () => buildStrip(tz, anchor, end),
+    [tz, anchor, end],
+  );
   const interval = labelInterval(pxPerHour);
   const scale = pxPerHour / HOUR;
   const x = (t: number): number => (t - anchor) * scale;
@@ -34,6 +38,16 @@ const Strip = memo(function Strip({ tz, anchor, end, pxPerHour, use24Hour }: Str
           style={{ left: x(band.start), width: (band.end - band.start) * scale }}
         />
       ))}
+      {/* Boundaries between constant-offset segments are daylight-saving changes.
+          Usually there are none, so this renders nothing at all. */}
+      {segments.slice(1).map((segment, i) => {
+        const shift = segment.offset - segments[i]!.offset;
+        return (
+          <span key={`dst-${segment.start}`} className="dstmark" style={{ left: x(segment.start) }}>
+            <span className="dstmark-chip">{formatSignedShift(shift)}</span>
+          </span>
+        );
+      })}
       {ticks.map((tick) => {
         const left = x(tick.t);
         if (tick.dayStart) {
