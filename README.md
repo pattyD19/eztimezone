@@ -143,6 +143,13 @@ Netlify's defaults are already right for `index.html` and `sw.js`
 (`max-age=0, must-revalidate`), which is what lets a new deploy be picked up
 promptly, so neither is overridden.
 
+The foot of the page carries a build stamp — `v0.1.0 · 332ff9d` — which is the
+package version plus the commit it was built from. After a deploy, that is how
+you tell whether a browser is showing the build you just shipped or one the
+service worker still has cached. A trailing `+` on the commit means the build
+was made from a tree with uncommitted changes, so the stamp can never quietly
+claim to be a commit it is not.
+
 **Deploying to a subpath needs more than this.** GitHub Pages project sites
 serve from `/<repo>/`, and while the manifest uses relative URLs, the service
 worker's precache paths and the script tags come from Vite's `base`. Without

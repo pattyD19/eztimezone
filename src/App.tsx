@@ -6,6 +6,7 @@ import { useClockPref } from './state/usePrefs';
 import { readShareState } from './lib/share';
 import { Timeline } from './ui/Timeline';
 import { Toolbar } from './ui/Toolbar';
+import { VersionStamp } from './ui/VersionStamp';
 import { ZonePicker } from './ui/ZonePicker';
 
 export function App() {
@@ -34,6 +35,8 @@ export function App() {
         <Timeline zones={zones} home={home} use24Hour={use24Hour} onRemove={remove} />
 
         <ZonePicker zones={zones} canAdd={canAdd} onAdd={add} />
+
+        <VersionStamp />
       </main>
     </TimelineContext.Provider>
   );

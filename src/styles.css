@@ -608,6 +608,16 @@ input[type='search']:disabled {
 }
 
 
+.version {
+  margin: -4px 0 0;
+  text-align: right;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  user-select: text;
+}
+
 .toast {
   position: fixed;
   left: 50%;
