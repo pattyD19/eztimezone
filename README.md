@@ -222,3 +222,7 @@ setting it you get a worker that 404s on every precached file.
 - `state/`, `ui/` and `lib/` have no tests. `TimelineStore` is the obvious gap:
   it is pure arithmetic with an injectable clock, and two of the bugs found so
   far lived in it.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
