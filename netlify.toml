@@ -1,0 +1,21 @@
+# Build settings for git-based deploys.
+#
+# Netlify reads this from the repository root when it builds from GitHub. It is
+# ignored by a drag-and-drop deploy of dist/, which is why the HTTP headers live
+# in public/_headers instead: that file is copied into dist/ by Vite and so
+# applies to both kinds of deploy. Do not duplicate the headers here — two
+# copies of the same rules will drift.
+
+[build]
+  command = "npm test && npm run build"
+  publish = "dist"
+
+[build.environment]
+  # Pinned so a change to Netlify's default cannot alter a build. Vite 8 needs
+  # Node ^20.19 or >=22.12; 22 is LTS and always available here.
+  NODE_VERSION = "22"
+
+# Deploy previews for pull requests build the same way as production. The build
+# stamp picks up COMMIT_REF, so a preview shows the commit it was built from.
+[context.deploy-preview]
+  command = "npm test && npm run build"

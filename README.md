@@ -157,6 +157,14 @@ npx netlify deploy --prod --dir=dist
 
 Or drag `dist/` onto https://app.netlify.com/drop.
 
+`netlify.toml` holds the settings for git-based deploys: Netlify runs
+`npm test && npm run build` and publishes `dist`, so a failing test blocks the
+deploy rather than shipping past it. Node is pinned there so a change to
+Netlify's default cannot alter a build. Deploy previews for pull requests build
+the same way.
+
+The HTTP headers deliberately do **not** live in `netlify.toml` — see below.
+
 `public/_headers` carries the two header overrides the deploy needs. It lives in
 `public/` rather than the repo root so Vite copies it into `dist/`, which means
 it applies to a drag-and-drop deploy of that folder and not only to a git-based
@@ -180,6 +188,10 @@ you tell whether a browser is showing the build you just shipped or one the
 service worker still has cached. A trailing `+` on the commit means the build
 was made from a tree with uncommitted changes, so the stamp can never quietly
 claim to be a commit it is not.
+
+On CI the commit comes from the platform — `COMMIT_REF` on Netlify, `GITHUB_SHA`
+on GitHub Actions — rather than from shelling out to git, because those
+checkouts are often shallow and are never a tree anyone has edited.
 
 A clean build is reproducible: its timestamp comes from the commit rather than
 the clock, so building the same commit twice produces byte-identical output.

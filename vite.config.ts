@@ -31,21 +31,38 @@ interface BuildInfo {
  * A dirty tree gets the wall clock, because such a build is not reproducible
  * whatever timestamp it carries -- and it is already marked with `+`.
  */
-function buildInfo(): BuildInfo {
-  const git = (...args: string[]): string =>
-    execFileSync('git', args, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+function tryGit(...args: string[]): string | null {
   try {
-    const sha = git('rev-parse', '--short', 'HEAD');
-    const dirty = git('status', '--porcelain') !== '';
-    return {
-      ref: dirty ? `${sha}+` : sha,
-      time: dirty ? new Date().toISOString() : git('log', '-1', '--format=%cI'),
-    };
+    return execFileSync('git', args, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
   } catch {
+    return null;
+  }
+}
+
+function buildInfo(): BuildInfo {
+  // On a CI build the platform states the commit outright, which beats shelling
+  // out: the checkout is often shallow, and it is never a tree anyone has been
+  // editing, so the dirty check would be noise at best and wrong at worst.
+  const ciSha =
+    process.env['COMMIT_REF'] ?? // Netlify
+    process.env['GITHUB_SHA'] ?? // GitHub Actions
+    null;
+
+  const sha = ciSha ? ciSha.slice(0, 7) : tryGit('rev-parse', '--short', 'HEAD');
+  if (!sha) {
     // Built from a tarball, or without git.
     const now = new Date();
     return { ref: now.toISOString().slice(0, 10), time: now.toISOString() };
   }
+
+  const status = ciSha ? '' : tryGit('status', '--porcelain');
+  const dirty = status !== null && status !== '';
+  const committedAt = tryGit('log', '-1', '--format=%cI');
+
+  return {
+    ref: dirty ? `${sha}+` : sha,
+    time: !dirty && committedAt ? committedAt : new Date().toISOString(),
+  };
 }
 
 const build = buildInfo();
