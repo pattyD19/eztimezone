@@ -1,0 +1,582 @@
+/* ---------------------------------------------------------------------------
+   Tokens.
+
+   Three blocks, because the viewer has three states: an explicit choice stamps
+   data-theme, and the default "system" setting stamps nothing at all. Every
+   token is declared in the bare :root block first, so nothing is defined only
+   behind a media query.
+
+   The amber accent is reserved for the playhead and the working-hours band --
+   the two things that mean "here". AM/PM therefore gets teal and violet rather
+   than the intuitive warm/cool split, which would collide with it.
+--------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+  --ground: #e7e9f0;
+  --surface: #fafbfd;
+  --sunk: #dde1ea;
+  --ink: #12151c;
+  --ink-2: #596174;
+  --ink-3: #8c94a6;
+  --line: #cdd3e0;
+  --line-2: #e2e6ee;
+  --accent: #c8631f;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(200, 99, 31, 0.14);
+  --night: rgba(40, 52, 80, 0.15);
+  --work: rgba(200, 99, 31, 0.11);
+  --am: #1a5d77;
+  --pm: #5c4189;
+  --am-soft: rgba(26, 93, 119, 0.13);
+  --pm-soft: rgba(92, 65, 137, 0.13);
+  --shadow: 0 1px 2px rgba(18, 21, 28, 0.06), 0 10px 28px -16px rgba(18, 21, 28, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --ground: #0d1016;
+    --surface: #171b23;
+    --sunk: #0f131a;
+    --ink: #e9ecf3;
+    --ink-2: #99a2b4;
+    --ink-3: #6a7385;
+    --line: #2b3240;
+    --line-2: #212734;
+    --accent: #ee9245;
+    --accent-ink: #20150b;
+    --accent-soft: rgba(238, 146, 69, 0.16);
+    --night: rgba(4, 7, 14, 0.5);
+    --work: rgba(238, 146, 69, 0.1);
+    --am: #7cc4da;
+    --pm: #b49ae6;
+    --am-soft: rgba(124, 196, 218, 0.15);
+    --pm-soft: rgba(180, 154, 230, 0.15);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 28px -16px rgba(0, 0, 0, 0.8);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --ground: #0d1016;
+  --surface: #171b23;
+  --sunk: #0f131a;
+  --ink: #e9ecf3;
+  --ink-2: #99a2b4;
+  --ink-3: #6a7385;
+  --line: #2b3240;
+  --line-2: #212734;
+  --accent: #ee9245;
+  --accent-ink: #20150b;
+  --accent-soft: rgba(238, 146, 69, 0.16);
+  --night: rgba(4, 7, 14, 0.5);
+  --work: rgba(238, 146, 69, 0.1);
+  --am: #7cc4da;
+  --pm: #b49ae6;
+  --am-soft: rgba(124, 196, 218, 0.15);
+  --pm-soft: rgba(180, 154, 230, 0.15);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 28px -16px rgba(0, 0, 0, 0.8);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: 'Archivo', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 18px 16px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---- toolbar ---- */
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.brand h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+button {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 6px 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+button:hover:not(:disabled) {
+  border-color: var(--ink-3);
+}
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+button.primary:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.seg {
+  display: flex;
+}
+.seg button {
+  border-radius: 0;
+  margin-left: -1px;
+  padding: 6px 10px;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+}
+.seg button:first-child {
+  border-radius: 7px 0 0 7px;
+  margin-left: 0;
+}
+.seg button:last-child {
+  border-radius: 0 7px 7px 0;
+}
+.seg button[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  font-weight: 600;
+  position: relative;
+  z-index: 1;
+}
+
+.hint {
+  margin: -4px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+.hint b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ---- the stack ----
+   Horizontal padding lives here, so .rows is exactly the strip coordinate
+   space and the playhead needs no offset fudge. */
+.stack {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 6px 14px 8px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  touch-action: pan-y;
+}
+.rows {
+  position: relative;
+}
+
+.row {
+  padding-top: 9px;
+  border-top: 1px solid var(--line-2);
+}
+.row:first-child {
+  border-top: 0;
+}
+
+.rowhead {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+  z-index: 3;
+}
+.rowname {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.city {
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.youtag {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 0 4px;
+  margin-left: -4px;
+}
+.meta {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.readout {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.clock {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+}
+.time {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.meridiem {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+.meridiem--am {
+  color: var(--am);
+  background: var(--am-soft);
+}
+.meridiem--pm {
+  color: var(--pm);
+  background: var(--pm-soft);
+}
+.date {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.remove {
+  position: absolute;
+  right: -8px;
+  top: -4px;
+  padding: 2px 7px;
+  font-size: 15px;
+  line-height: 1.1;
+  color: var(--ink-3);
+  background: transparent;
+  border: 0;
+  opacity: 0;
+  transition: opacity 0.12s, color 0.12s;
+}
+.row:hover .remove,
+.remove:focus-visible {
+  opacity: 1;
+}
+.remove:hover {
+  color: var(--ink);
+}
+
+/* ---- strips ---- */
+.track {
+  position: relative;
+  height: 50px;
+  overflow: hidden;
+  background: var(--sunk);
+  border-radius: 6px;
+  cursor: grab;
+  touch-action: none;
+}
+.stack.is-dragging .track {
+  cursor: grabbing;
+}
+.track:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.content {
+  position: absolute;
+  inset: 0 auto 0 0;
+  will-change: transform;
+}
+
+.band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+.band--night {
+  background: var(--night);
+}
+.band--work {
+  background: var(--work);
+}
+
+.tick {
+  position: absolute;
+  bottom: 0;
+  width: 1px;
+  height: 7px;
+  background: var(--line);
+}
+.tick--major {
+  height: 12px;
+  background: var(--ink-3);
+}
+.hourlabel {
+  position: absolute;
+  top: 5px;
+  transform: translateX(-50%);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--ink-2);
+}
+.hourlabel--am {
+  color: var(--am);
+}
+.hourlabel--pm {
+  color: var(--pm);
+}
+
+.dayline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--ink-3);
+  opacity: 0.55;
+}
+.daylabel {
+  position: absolute;
+  top: 4px;
+  margin-left: 5px;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+
+/* ---- playhead ---- */
+.playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--accent);
+  pointer-events: none;
+  z-index: 4;
+}
+.playhead::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -4px;
+  border: 5px solid transparent;
+  border-top-color: var(--accent);
+  border-bottom: 0;
+}
+.nowline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed var(--ink-3);
+  pointer-events: none;
+  opacity: 0.75;
+  z-index: 2;
+}
+.nowline::after {
+  content: 'now';
+  position: absolute;
+  bottom: 2px;
+  left: 4px;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ---- picker ---- */
+.picker {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+input[type='search'] {
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 12px;
+  min-width: 0;
+}
+input[type='search']::placeholder {
+  color: var(--ink-3);
+}
+input[type='search']:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  border-color: var(--accent);
+}
+input[type='search']:disabled {
+  opacity: 0.5;
+}
+
+.results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 6px;
+  z-index: 20;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 4px;
+}
+.result {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  border-radius: 6px;
+  padding: 7px 9px;
+}
+.result:hover,
+.result:focus-visible {
+  background: var(--accent-soft);
+}
+.result-name {
+  font-weight: 500;
+  font-size: 14px;
+}
+.result-region {
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+.result-offset {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 11.5px;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.empty {
+  margin: 0;
+  padding: 10px;
+  color: var(--ink-3);
+  font-size: 13px;
+}
+
+/* ---- notes ---- */
+.notes {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+.notes h2 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.notes ul {
+  margin: 0;
+  padding-left: 18px;
+  max-width: 68ch;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--ground);
+  font-size: 13px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  z-index: 50;
+}
+
+@media (max-width: 560px) {
+  .app {
+    padding: 14px 12px 40px;
+  }
+  .time {
+    font-size: 17px;
+  }
+  .meridiem,
+  .date {
+    font-size: 10px;
+  }
+  .track {
+    height: 46px;
+  }
+  .remove {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}

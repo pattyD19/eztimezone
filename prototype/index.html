@@ -1,0 +1,971 @@
+<title>EzTimeZone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme: light;
+  --ground:#E7E9F0;
+  --surface:#FAFBFD;
+  --sunk:#DDE1EA;
+  --ink:#12151C;
+  --ink-2:#596174;
+  --ink-3:#8C94A6;
+  --line:#CDD3E0;
+  --line-2:#E2E6EE;
+  --accent:#C8631F;
+  --accent-ink:#FFFFFF;
+  --accent-soft:rgba(200,99,31,.14);
+  --night:rgba(40,52,80,.15);
+  --work:rgba(200,99,31,.11);
+  --am:#1A5D77;
+  --pm:#5C4189;
+  --am-soft:rgba(26,93,119,.13);
+  --pm-soft:rgba(92,65,137,.13);
+  --shadow:0 1px 2px rgba(18,21,28,.06), 0 10px 28px -16px rgba(18,21,28,.30);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --ground:#0D1016;
+    --surface:#171B23;
+    --sunk:#0F131A;
+    --ink:#E9ECF3;
+    --ink-2:#99A2B4;
+    --ink-3:#6A7385;
+    --line:#2B3240;
+    --line-2:#212734;
+    --accent:#EE9245;
+    --accent-ink:#20150B;
+    --accent-soft:rgba(238,146,69,.16);
+    --night:rgba(4,7,14,.50);
+    --work:rgba(238,146,69,.10);
+    --am:#7CC4DA;
+    --pm:#B49AE6;
+    --am-soft:rgba(124,196,218,.15);
+    --pm-soft:rgba(180,154,230,.15);
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 28px -16px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --ground:#0D1016;
+  --surface:#171B23;
+  --sunk:#0F131A;
+  --ink:#E9ECF3;
+  --ink-2:#99A2B4;
+  --ink-3:#6A7385;
+  --line:#2B3240;
+  --line-2:#212734;
+  --accent:#EE9245;
+  --accent-ink:#20150B;
+  --accent-soft:rgba(238,146,69,.16);
+  --night:rgba(4,7,14,.50);
+  --work:rgba(238,146,69,.10);
+  --am:#7CC4DA;
+  --pm:#B49AE6;
+  --am-soft:rgba(124,196,218,.15);
+  --pm-soft:rgba(180,154,230,.15);
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 28px -16px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:'Archivo','Helvetica Neue',Helvetica,Arial,sans-serif;
+  font-size:15px;
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+.app{max-width:1040px;margin:0 auto;padding:18px 16px 48px;display:flex;flex-direction:column;gap:14px}
+
+/* ---- top bar ---- */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:9px;min-width:0}
+.brand h1{
+  margin:0;font-size:20px;font-weight:700;letter-spacing:-.015em;
+}
+.brand .tag{
+  font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-3);border:1px solid var(--line);border-radius:3px;padding:1px 5px;
+}
+.controls{display:flex;align-items:center;gap:6px}
+button{
+  font:inherit;font-size:13px;font-weight:500;color:var(--ink);
+  background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:6px 11px;cursor:pointer;white-space:nowrap;
+  transition:background .12s,border-color .12s,color .12s;
+}
+button:hover{border-color:var(--ink-3)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.primary[data-live="1"]{opacity:.45;cursor:default}
+button.primary[data-live="1"]:hover{border-color:var(--accent)}
+.seg{display:flex}
+.seg button{border-radius:0;margin-left:-1px;padding:6px 10px;font-family:'IBM Plex Mono',monospace}
+.seg button:first-child{border-radius:7px 0 0 7px;margin-left:0}
+.seg button:last-child{border-radius:0 7px 7px 0}
+.seg button[aria-pressed="true"]{
+  background:var(--accent-soft);border-color:var(--accent);color:var(--ink);
+  font-weight:600;position:relative;z-index:1;
+}
+
+.hint{
+  font-size:12.5px;color:var(--ink-2);margin:-4px 0 0;
+}
+.hint b{color:var(--ink);font-weight:600}
+
+/* ---- stack ---- */
+.stack{
+  position:relative;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:6px 0 8px;
+  box-shadow:var(--shadow);
+  touch-action:pan-y;
+  overflow:hidden;
+}
+.row{
+  position:relative;
+  padding:9px 14px 0;
+  border-top:1px solid var(--line-2);
+}
+.row:first-child{border-top:0}
+.row.home .city::after{
+  content:'you';
+  font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--accent);
+  border:1px solid var(--accent);border-radius:3px;padding:0 4px;margin-left:7px;
+  position:relative;top:-1px;
+}
+.rhead{
+  display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  margin-bottom:6px;position:relative;z-index:3;
+}
+.rname{min-width:0;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.city{font-size:14.5px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
+.meta{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);
+  white-space:nowrap;
+}
+.rtime{display:flex;align-items:baseline;gap:8px;flex-shrink:0}
+.rtime .t{
+  font-family:'IBM Plex Mono',monospace;font-weight:600;
+  font-size:20px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;
+}
+.rtime .clock{display:inline-flex;align-items:baseline;gap:3px}
+.rtime .mer{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;
+  letter-spacing:.06em;border-radius:3px;padding:1px 4px;
+}
+.rtime .mer.am{color:var(--am);background:var(--am-soft)}
+.rtime .mer.pm{color:var(--pm);background:var(--pm-soft)}
+.rtime .d{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-2);
+  white-space:nowrap;
+}
+.rm{
+  position:absolute;right:-8px;top:-4px;
+  padding:2px 7px;font-size:15px;line-height:1.1;color:var(--ink-3);
+  background:transparent;border:0;opacity:0;transition:opacity .12s,color .12s;
+}
+.row:hover .rm,.rm:focus-visible{opacity:1}
+.rm:hover{color:var(--ink)}
+
+.track{
+  position:relative;height:50px;overflow:hidden;
+  background:var(--sunk);
+  border-radius:6px;
+  touch-action:none;
+  cursor:grab;
+}
+.stack.dragging .track{cursor:grabbing}
+.track:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.content{position:absolute;inset:0 auto 0 0;will-change:transform}
+
+.band{position:absolute;top:0;bottom:0}
+.band.night{background:var(--night)}
+.band.work{background:var(--work)}
+.tk{position:absolute;bottom:0;width:1px;background:var(--line);height:7px}
+.tk.maj{height:12px;background:var(--ink-3)}
+.lb{
+  position:absolute;top:5px;
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-2);
+  transform:translateX(-50%);white-space:nowrap;font-variant-numeric:tabular-nums;
+}
+.lb.am{color:var(--am)}
+.lb.pm{color:var(--pm)}
+.dayline{position:absolute;top:0;bottom:0;width:1px;background:var(--ink-3);opacity:.55}
+.dl{
+  position:absolute;top:4px;margin-left:5px;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+  color:var(--ink);background:var(--surface);
+  border:1px solid var(--line);border-radius:3px;padding:0 4px;white-space:nowrap;
+}
+
+/* playhead + now marker */
+.playhead{
+  position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;
+  background:var(--accent);pointer-events:none;z-index:4;
+}
+.playhead::before{
+  content:'';position:absolute;top:0;left:-4px;
+  border:5px solid transparent;border-top-color:var(--accent);border-bottom:0;
+}
+.nowline{
+  position:absolute;top:0;bottom:0;width:0;left:14px;
+  border-left:1px dashed var(--ink-3);pointer-events:none;z-index:2;opacity:.75;
+}
+.nowline::after{
+  content:'now';position:absolute;bottom:2px;left:4px;
+  font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink-3);
+}
+.stack.live .nowline{display:none}
+
+/* ---- picker ---- */
+.picker{position:relative;display:flex;flex-direction:column;gap:8px}
+.pfield{display:flex;align-items:center;gap:9px}
+input[type=search]{
+  font:inherit;font-size:14px;color:var(--ink);
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  padding:9px 12px;flex:1;min-width:0;
+}
+input[type=search]::placeholder{color:var(--ink-3)}
+input[type=search]:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+input[type=search]:disabled{opacity:.5}
+.results{
+  position:absolute;top:100%;left:0;right:0;margin-top:6px;z-index:20;
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  box-shadow:var(--shadow);max-height:280px;overflow-y:auto;padding:4px;
+}
+.results[hidden]{display:none}
+.res{
+  display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  width:100%;text-align:left;border:0;background:transparent;border-radius:6px;
+  padding:7px 9px;
+}
+.res:hover,.res:focus-visible{background:var(--accent-soft);border-color:transparent}
+.res .rn{font-weight:500;font-size:14px}
+.res .rr{font-size:11.5px;color:var(--ink-3)}
+.res .ro{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-2);white-space:nowrap}
+.empty{padding:10px;color:var(--ink-3);font-size:13px}
+
+.note{
+  font-size:12.5px;color:var(--ink-2);line-height:1.6;
+  border-top:1px solid var(--line);padding-top:12px;
+}
+.note h2{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin:0 0 6px;font-weight:600}
+.note ul{margin:0;padding-left:18px}
+.note code{font-family:'IBM Plex Mono',monospace;font-size:11.5px;background:var(--sunk);padding:1px 4px;border-radius:3px}
+
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%);
+  background:var(--ink);color:var(--ground);
+  font-size:13px;padding:8px 14px;border-radius:8px;z-index:50;
+  box-shadow:var(--shadow);
+}
+.toast[hidden]{display:none}
+
+@media (max-width:560px){
+  .app{padding:14px 12px 40px}
+  .rtime .t{font-size:17px}
+  .rtime .mer{font-size:10px}
+  .rtime .clock{display:inline-flex;align-items:baseline;gap:3px}
+.rtime .mer{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;
+  letter-spacing:.06em;border-radius:3px;padding:1px 4px;
+}
+.rtime .mer.am{color:var(--am);background:var(--am-soft)}
+.rtime .mer.pm{color:var(--pm);background:var(--pm-soft)}
+.rtime .d{font-size:10px}
+  .track{height:46px}
+  .rm{opacity:1}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms !important}
+}
+</style>
+
+<div class="app">
+  <header class="bar">
+    <div class="brand">
+      <h1>EzTimeZone</h1>
+      <span class="tag">prototype</span>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Clock format">
+        <button id="f12" aria-pressed="true">12h</button>
+        <button id="f24" aria-pressed="false">24h</button>
+      </div>
+      <div class="seg">
+        <button id="zout" title="Zoom out" aria-label="Zoom out">&minus;</button>
+        <button id="zin" title="Zoom in" aria-label="Zoom in">+</button>
+      </div>
+      <button id="share">Share</button>
+      <button id="now" class="primary" data-live="1">Now</button>
+    </div>
+  </header>
+
+  <p class="hint">Drag <b>any</b> strip sideways &mdash; all five move together. The amber line is the moment you&rsquo;ve picked. Pinch or scroll to zoom.</p>
+
+  <div class="stack live" id="stack">
+    <div class="nowline" id="nowline"></div>
+    <div class="playhead"></div>
+  </div>
+
+  <section class="picker">
+    <div class="pfield">
+      <input type="search" id="q" placeholder="Add a city or timezone&hellip;" autocomplete="off" aria-label="Search for a city or timezone">
+    </div>
+    <div class="results" id="results" hidden></div>
+  </section>
+
+  <footer class="note">
+    <h2>What this prototype covers</h2>
+    <ul>
+      <li>One shared instant drives all rows &mdash; hour ticks are computed per zone, so half-hour offsets (Kolkata, Kathmandu) sit where they really are.</li>
+      <li>DST transitions inside the visible window are found by binary search, so tick grids stay correct across a spring-forward.</li>
+      <li>Amber band = 09:00&ndash;17:00 local. Dark band = 22:00&ndash;07:00 local.</li>
+      <li>Zones and the picked time persist in this browser and encode into the URL via <code>Share</code>.</li>
+      <li>Settling snaps to the nearest 15 minutes. Clock format toggles between 12h and 24h; morning hours are teal, afternoon and evening violet, on both the chips and the strip labels.</li>
+    </ul>
+  </footer>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+'use strict';
+var HOUR = 3600000, MIN = 60000;
+var WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+var MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/* ---------------- time engine ---------------- */
+var fmts = {};
+function partsFmt(tz){
+  if(!fmts[tz]){
+    fmts[tz] = new Intl.DateTimeFormat('en-US',{
+      timeZone:tz, hourCycle:'h23',
+      year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', second:'2-digit'
+    });
+  }
+  return fmts[tz];
+}
+// Offset east of UTC, in ms, for zone tz at instant t.
+function offsetAt(tz, t){
+  var p = partsFmt(tz).formatToParts(new Date(t)), g = {}, i;
+  for(i=0;i<p.length;i++){ if(p[i].type !== 'literal') g[p[i].type] = p[i].value; }
+  var h = +g.hour; if(h === 24) h = 0;
+  var asUTC = Date.UTC(+g.year, +g.month - 1, +g.day, h, +g.minute, +g.second);
+  return Math.round((asUTC - t) / MIN) * MIN;
+}
+function zoneValid(tz){ try{ offsetAt(tz, Date.now()); return true; }catch(e){ return false; } }
+
+// Narrow a known offset change in (lo,hi] down to the minute.
+function findTransition(tz, lo, hi, offLo){
+  while(hi - lo > MIN){
+    var mid = lo + Math.floor((hi - lo) / 2);
+    if(offsetAt(tz, mid) === offLo) lo = mid; else hi = mid;
+  }
+  return hi;
+}
+// Split [t0,t1] into constant-offset segments. Coarse 6h scan, then bisect.
+function segmentsOf(tz, t0, t1){
+  var step = 6 * HOUR, out = [], start = t0, off = offsetAt(tz, t0), t, o;
+  for(t = t0 + step; t < t1; t += step){
+    o = offsetAt(tz, t);
+    if(o !== off){
+      var tx = findTransition(tz, t - step, t, off);
+      out.push({t0:start, t1:tx, off:off});
+      start = tx; off = o;
+    }
+  }
+  out.push({t0:start, t1:t1, off:off});
+  return out;
+}
+function offsetLabel(off){
+  var s = off < 0 ? '-' : '+', a = Math.abs(off) / MIN;
+  var h = Math.floor(a / 60), m = a % 60;
+  return 'GMT' + s + h + (m ? ':' + (m < 10 ? '0' : '') + m : '');
+}
+function deltaLabel(off, home){
+  var d = (off - home) / MIN;
+  if(d === 0) return 'same time as you';
+  var s = d < 0 ? 'behind' : 'ahead', a = Math.abs(d);
+  var h = Math.floor(a / 60), m = a % 60;
+  return (h ? h + 'h' : '') + (m ? (h ? ' ' : '') + m + 'm' : '') + ' ' + s;
+}
+function pad(n){ return (n < 10 ? '0' : '') + n; }
+var FIG = '\u2007';                                   // digit-width space, keeps colons aligned
+function h12(h){ return h % 12 === 0 ? 12 : h % 12; }
+function meridiem(h){ return h < 12 ? 'AM' : 'PM'; }
+function hourTick(h){                                  // compact strip label: 12a 3a 12p 9p
+  if(h24) return pad(h);
+  if(h === 0) return '12a';
+  if(h === 12) return '12p';
+  return (h < 12 ? h + 'a' : (h - 12) + 'p');
+}
+
+/* ---------------- zone catalogue ---------------- */
+var FALLBACK = ['UTC','America/Los_Angeles','America/Denver','America/Chicago','America/New_York',
+  'America/Sao_Paulo','Europe/London','Europe/Paris','Europe/Berlin','Europe/Moscow','Africa/Lagos',
+  'Africa/Johannesburg','Asia/Dubai','Asia/Karachi','Asia/Kolkata','Asia/Kathmandu','Asia/Bangkok',
+  'Asia/Singapore','Asia/Shanghai','Asia/Tokyo','Asia/Seoul','Australia/Sydney','Pacific/Auckland'];
+var ZONES;
+try{ ZONES = (Intl.supportedValuesOf ? Intl.supportedValuesOf('timeZone') : FALLBACK).slice(); }
+catch(e){ ZONES = FALLBACK.slice(); }
+if(!ZONES.length) ZONES = FALLBACK.slice();
+
+var ALIAS = {
+  'America/New_York':'nyc new york manhattan boston miami atlanta east coast et est edt',
+  'America/Chicago':'chicago dallas houston austin texas central ct cst',
+  'America/Denver':'denver colorado salt lake mountain mt mst',
+  'America/Phoenix':'phoenix arizona',
+  'America/Los_Angeles':'la los angeles san francisco sf bay area seattle portland san diego pacific pt pst pdt west coast',
+  'America/Toronto':'toronto ottawa canada',
+  'America/Vancouver':'vancouver',
+  'America/Mexico_City':'mexico cdmx',
+  'America/Sao_Paulo':'sao paulo brazil rio brasilia',
+  'America/Bogota':'bogota colombia',
+  'America/Argentina/Buenos_Aires':'buenos aires argentina',
+  'Europe/London':'london uk britain england gmt bst edinburgh manchester',
+  'Europe/Dublin':'dublin ireland',
+  'Europe/Lisbon':'lisbon portugal',
+  'Europe/Madrid':'madrid spain barcelona',
+  'Europe/Paris':'paris france',
+  'Europe/Berlin':'berlin germany munich frankfurt',
+  'Europe/Amsterdam':'amsterdam netherlands holland',
+  'Europe/Zurich':'zurich switzerland geneva',
+  'Europe/Stockholm':'stockholm sweden',
+  'Europe/Warsaw':'warsaw poland krakow',
+  'Europe/Rome':'rome italy milan',
+  'Europe/Athens':'athens greece',
+  'Europe/Istanbul':'istanbul turkey',
+  'Europe/Moscow':'moscow russia',
+  'Europe/Kyiv':'kyiv kiev ukraine',
+  'Africa/Cairo':'cairo egypt',
+  'Africa/Lagos':'lagos nigeria',
+  'Africa/Nairobi':'nairobi kenya',
+  'Africa/Johannesburg':'johannesburg south africa cape town jhb',
+  'Asia/Jerusalem':'tel aviv israel jerusalem',
+  'Asia/Dubai':'dubai uae abu dhabi emirates',
+  'Asia/Riyadh':'riyadh saudi',
+  'Asia/Karachi':'karachi pakistan lahore islamabad',
+  'Asia/Kolkata':'india mumbai bombay delhi bangalore bengaluru hyderabad chennai pune calcutta ist',
+  'Asia/Kathmandu':'kathmandu nepal',
+  'Asia/Dhaka':'dhaka bangladesh',
+  'Asia/Bangkok':'bangkok thailand vietnam hanoi jakarta',
+  'Asia/Singapore':'singapore malaysia kuala lumpur',
+  'Asia/Hong_Kong':'hong kong hk',
+  'Asia/Shanghai':'china beijing shanghai shenzhen guangzhou',
+  'Asia/Taipei':'taipei taiwan',
+  'Asia/Manila':'manila philippines',
+  'Asia/Seoul':'seoul korea',
+  'Asia/Tokyo':'tokyo japan osaka kyoto jst',
+  'Australia/Perth':'perth western australia',
+  'Australia/Brisbane':'brisbane queensland',
+  'Australia/Adelaide':'adelaide',
+  'Australia/Sydney':'sydney melbourne australia canberra aest',
+  'Pacific/Auckland':'auckland new zealand nz wellington',
+  'Pacific/Honolulu':'honolulu hawaii',
+  'UTC':'utc gmt zulu universal'
+};
+function pretty(id){
+  var s = id.split('/');
+  return s[s.length - 1].replace(/_/g, ' ');
+}
+function region(id){
+  var s = id.split('/');
+  return s.length > 1 ? s[0].replace(/_/g, ' ') : 'Universal';
+}
+function search(q){
+  q = q.trim().toLowerCase();
+  if(!q) return [];
+  var exact = [], starts = [], contains = [], i, id, name, al;
+  for(i = 0; i < ZONES.length; i++){
+    id = ZONES[i];
+    name = pretty(id).toLowerCase();
+    al = ALIAS[id] || '';
+    if(name === q) exact.push(id);
+    else if(name.indexOf(q) === 0 || (' ' + al).indexOf(' ' + q) === 0) starts.push(id);
+    else if(name.indexOf(q) > -1 || al.indexOf(q) > -1 || id.toLowerCase().indexOf(q) > -1) contains.push(id);
+  }
+  return exact.concat(starts, contains).slice(0, 40);
+}
+
+/* ---------------- state ---------------- */
+var stack = document.getElementById('stack');
+var nowline = document.getElementById('nowline');
+var nowBtn = document.getElementById('now');
+var qEl = document.getElementById('q');
+var resEl = document.getElementById('results');
+var toastEl = document.getElementById('toast');
+
+var home = 'UTC';
+try{ home = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; }catch(e){}
+if(!zoneValid(home)) home = 'UTC';
+
+var zones = [];
+var center = Date.now();
+var pxh = 30;          // pixels per hour
+var following = true;  // playhead tracks real time until the user drags
+var h24 = false;       // 12-hour with AM/PM by default
+var W = 600;
+var rows = [];
+
+// buffer bookkeeping
+var builtCenter = null, builtPxh = 0, builtW = 0, anchor = 0;
+
+function screenMs(){ return W * HOUR / pxh; }
+function xOf(t){ return (t - center) * pxh / HOUR + W / 2; }
+
+/* ---------------- persistence ---------------- */
+function defaults(){
+  var d = [home], seed = ['America/Los_Angeles','America/New_York','Europe/London','Asia/Kolkata','Asia/Tokyo'], i;
+  for(i = 0; i < seed.length && d.length < 5; i++){
+    if(d.indexOf(seed[i]) < 0 && zoneValid(seed[i])) d.push(seed[i]);
+  }
+  return d;
+}
+function readHash(){
+  var h = location.hash.replace(/^#/, '');
+  if(!h) return null;
+  var out = {}, parts = h.split('&'), i, kv;
+  for(i = 0; i < parts.length; i++){
+    kv = parts[i].split('=');
+    out[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || '');
+  }
+  var z = null;
+  if(out.tz){
+    z = out.tz.split(',').filter(zoneValid).slice(0, 5);
+    if(!z.length) z = null;
+  }
+  var t = out.t && /^\d+$/.test(out.t) ? +out.t : null;
+  return z || t ? {zones:z, t:t} : null;
+}
+function load(){
+  var fromUrl = readHash();
+  if(fromUrl && fromUrl.zones){
+    zones = fromUrl.zones;
+    if(zones.indexOf(home) < 0){ zones.unshift(home); zones = zones.slice(0, 5); }
+  }else{
+    var saved = null;
+    try{ saved = JSON.parse(localStorage.getItem('eztz.zones') || 'null'); }catch(e){}
+    if(saved && saved.length){
+      zones = saved.filter(zoneValid).slice(0, 5);
+      if(zones.indexOf(home) < 0) zones.unshift(home);
+      zones = zones.slice(0, 5);
+    }
+  }
+  if(!zones.length) zones = defaults();
+  if(zones[0] !== home && zones.indexOf(home) > 0){
+    zones.splice(zones.indexOf(home), 1);
+    zones.unshift(home);
+  }
+  if(fromUrl && fromUrl.t){ center = fromUrl.t; following = false; }
+}
+function save(){
+  try{ localStorage.setItem('eztz.zones', JSON.stringify(zones)); }catch(e){}
+}
+
+/* ---------------- row DOM ---------------- */
+function buildRows(){
+  var i, r;
+  for(i = 0; i < rows.length; i++) stack.removeChild(rows[i].el);
+  rows = [];
+  for(i = 0; i < zones.length; i++){
+    r = makeRow(zones[i], i === 0);
+    stack.insertBefore(r.el, nowline);
+    rows.push(r);
+  }
+  layout();
+}
+function makeRow(tz, isHome){
+  var el = document.createElement('div');
+  el.className = 'row' + (isHome ? ' home' : '');
+  el.innerHTML =
+    '<div class="rhead">' +
+      '<div class="rname"><span class="city"></span><span class="meta"></span></div>' +
+      '<div class="rtime"><span class="clock"><span class="t">&mdash;:&mdash;&mdash;</span><span class="mer"></span></span><span class="d"></span></div>' +
+      (isHome ? '' : '<button class="rm" title="Remove">&times;</button>') +
+    '</div>' +
+    '<div class="track" tabindex="0" role="slider" aria-label="Timeline">' +
+      '<div class="content"></div>' +
+    '</div>';
+  var row = {
+    tz: tz, el: el,
+    city: el.querySelector('.city'),
+    meta: el.querySelector('.meta'),
+    t: el.querySelector('.t'),
+    mer: el.querySelector('.mer'),
+    d: el.querySelector('.d'),
+    track: el.querySelector('.track'),
+    content: el.querySelector('.content')
+  };
+  row.city.textContent = pretty(tz);
+  var rm = el.querySelector('.rm');
+  if(rm){
+    rm.setAttribute('aria-label', 'Remove ' + pretty(tz));
+    rm.addEventListener('click', function(){
+      zones = zones.filter(function(z){ return z !== tz; });
+      save(); buildRows();
+    });
+  }
+  row.track.setAttribute('aria-valuemin', Math.round((Date.now() - 14 * 86400000) / MIN));
+  row.track.setAttribute('aria-valuemax', Math.round((Date.now() + 14 * 86400000) / MIN));
+  row.track.addEventListener('keydown', onKey);
+  return row;
+}
+
+/* ---------------- strip painting ---------------- */
+function labelEvery(){
+  if(pxh >= 46) return 1;
+  if(pxh >= 22) return 3;
+  if(pxh >= 11) return 6;
+  return 12;
+}
+function paint(row, t0, t1){
+  var segs = segmentsOf(row.tz, t0, t1);
+  var scale = pxh / HOUR, every = labelEvery();
+  var html = [], si, s, L, t, x, d, h, first;
+
+  // day/night + working-hours bands, walked in local days
+  for(si = 0; si < segs.length; si++){
+    s = segs[si];
+    var dayStart = Math.floor((s.t0 + s.off) / 86400000) * 86400000;
+    for(L = dayStart; L - s.off < s.t1; L += 86400000){
+      html.push(band(L, L + 7 * HOUR, s, t0, scale, 'night'));
+      html.push(band(L + 22 * HOUR, L + 24 * HOUR, s, t0, scale, 'night'));
+      html.push(band(L + 9 * HOUR, L + 17 * HOUR, s, t0, scale, 'work'));
+    }
+  }
+  // hour ticks, labels, day boundaries
+  for(si = 0; si < segs.length; si++){
+    s = segs[si];
+    first = Math.ceil((s.t0 + s.off) / HOUR) * HOUR;
+    for(L = first; L - s.off < s.t1; L += HOUR){
+      t = L - s.off;
+      x = (t - t0) * scale;
+      d = new Date(L);
+      h = d.getUTCHours();
+      if(h === 0){
+        html.push('<span class="dayline" style="left:' + x.toFixed(1) + 'px"></span>');
+        html.push('<span class="dl" style="left:' + x.toFixed(1) + 'px">' +
+          WD[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + MO[d.getUTCMonth()] + '</span>');
+      }else if(h % every === 0){
+        html.push('<span class="tk maj" style="left:' + x.toFixed(1) + 'px"></span>');
+        html.push('<span class="lb ' + (h < 12 ? 'am' : 'pm') + '" style="left:' + x.toFixed(1) + 'px">' + hourTick(h) + '</span>');
+      }else{
+        html.push('<span class="tk" style="left:' + x.toFixed(1) + 'px"></span>');
+      }
+    }
+  }
+  row.content.style.width = ((t1 - t0) * scale).toFixed(1) + 'px';
+  row.content.innerHTML = html.join('');
+}
+function band(La, Lb, s, t0, scale, cls){
+  var a = Math.max(La - s.off, s.t0), b = Math.min(Lb - s.off, s.t1);
+  if(b <= a) return '';
+  var x = (a - t0) * scale, w = (b - a) * scale;
+  return '<span class="band ' + cls + '" style="left:' + x.toFixed(1) + 'px;width:' + w.toFixed(1) + 'px"></span>';
+}
+
+function rebuild(){
+  var span = screenMs() * 3;
+  anchor = center - span / 2;
+  var end = anchor + span, i;
+  for(i = 0; i < rows.length; i++) paint(rows[i], anchor, end);
+  builtCenter = center; builtPxh = pxh; builtW = W;
+}
+function needsRebuild(){
+  return builtCenter === null || pxh !== builtPxh || W !== builtW ||
+         Math.abs(center - builtCenter) > screenMs() * 0.6;
+}
+
+/* ---------------- frame ---------------- */
+function frame(){
+  if(needsRebuild()) rebuild();
+  var ax = xOf(anchor), i, r, off, homeOff = offsetAt(home, center), L, hh, terse = W < 360;
+  for(i = 0; i < rows.length; i++){
+    r = rows[i];
+    r.content.style.transform = 'translate3d(' + ax.toFixed(2) + 'px,0,0)';
+    off = offsetAt(r.tz, center);
+    L = new Date(center + off);
+    hh = L.getUTCHours();
+    if(h24){
+      r.t.textContent = pad(hh) + ':' + pad(L.getUTCMinutes());
+      r.mer.style.display = 'none';
+    }else{
+      r.t.textContent = (h12(hh) < 10 ? FIG : '') + h12(hh) + ':' + pad(L.getUTCMinutes());
+      r.mer.textContent = meridiem(hh);
+      r.mer.className = 'mer ' + (hh < 12 ? 'am' : 'pm');
+      r.mer.style.display = '';
+    }
+    r.d.textContent = WD[L.getUTCDay()] + ' ' + L.getUTCDate() + (terse ? '' : ' ' + MO[L.getUTCMonth()]);
+    r.meta.textContent = offsetLabel(off) + (i === 0 ? '' : ' · ' + deltaLabel(off, homeOff));
+    r.track.setAttribute('aria-valuetext',
+      pretty(r.tz) + ' ' + r.t.textContent.replace(/\u2007/g, '') +
+      (h24 ? '' : ' ' + r.mer.textContent) + ' on ' + r.d.textContent);
+    r.track.setAttribute('aria-valuenow', Math.round(center / MIN));
+  }
+  var nx = xOf(Date.now());
+  nowline.style.transform = 'translateX(' + nx.toFixed(1) + 'px)';
+  nowline.style.display = (nx < -20 || nx > W + 20) ? 'none' : '';
+  nowBtn.setAttribute('data-live', following ? '1' : '0');
+  stack.classList.toggle('live', following);
+}
+var raf = 0;
+function tick(){
+  raf = 0;
+  var busy = dragging || Math.abs(vel) > 0.0005 || snapping;
+  if(following && !dragging) center = Date.now();
+  if(!dragging) glide();
+  frame();
+  if(busy || following) schedule();
+}
+function schedule(){ if(!raf) raf = requestAnimationFrame(tick); }
+
+/* ---------------- gestures ---------------- */
+var dragging = false, pointers = {}, lastX = 0, vel = 0, samples = [],
+    moved = false, pinchDist = 0, pinchMid = 0, snapping = false, snapTo = 0, snapFrom = 0, snapT0 = 0;
+
+function msPerPx(){ return HOUR / pxh; }
+
+function onDown(e){
+  if(e.target.closest('button') || e.target.closest('input')) return;
+  var track = e.target.closest('.track');
+  if(!track && !e.target.closest('.row')) return;
+  pointers[e.pointerId] = e.clientX;
+  if(Object.keys(pointers).length === 1){
+    dragging = true; moved = false; snapping = false;
+    lastX = e.clientX; vel = 0; samples = [{x:e.clientX, t:performance.now()}];
+    stack.classList.add('dragging');
+    try{ stack.setPointerCapture(e.pointerId); }catch(err){}
+  }else if(Object.keys(pointers).length === 2){
+    var ids = Object.keys(pointers);
+    pinchDist = Math.abs(pointers[ids[0]] - pointers[ids[1]]);
+    pinchMid = center + ((pointers[ids[0]] + pointers[ids[1]]) / 2 - trackLeft() - W / 2) * msPerPx();
+  }
+  schedule();
+}
+function trackLeft(){ return rows.length ? rows[0].track.getBoundingClientRect().left : stack.getBoundingClientRect().left; }
+
+function onMove(e){
+  if(!(e.pointerId in pointers)) return;
+  pointers[e.pointerId] = e.clientX;
+  var ids = Object.keys(pointers);
+  if(ids.length >= 2){
+    var d = Math.abs(pointers[ids[0]] - pointers[ids[1]]);
+    if(pinchDist > 8 && d > 8){
+      var mid = (pointers[ids[0]] + pointers[ids[1]]) / 2 - trackLeft();
+      setZoom(pxh * (d / pinchDist), pinchMid, mid);
+      pinchDist = d;
+    }
+    moved = true;
+    schedule();
+    return;
+  }
+  if(!dragging) return;
+  var dx = e.clientX - lastX;
+  if(Math.abs(dx) > 0) moved = true;
+  lastX = e.clientX;
+  following = false;
+  center -= dx * msPerPx();
+  var now = performance.now();
+  samples.push({x:e.clientX, t:now});
+  while(samples.length > 6) samples.shift();
+  schedule();
+}
+function onUp(e){
+  delete pointers[e.pointerId];
+  if(Object.keys(pointers).length > 0){ pinchDist = 0; return; }
+  if(dragging){
+    dragging = false;
+    stack.classList.remove('dragging');
+    var a = samples[0], b = samples[samples.length - 1];
+    if(a && b && b.t - a.t > 0 && b.t - a.t < 220){
+      vel = -(b.x - a.x) / (b.t - a.t) * msPerPx();   // ms of time per ms of wall clock
+    }else vel = 0;
+    if(!moved) vel = 0;
+    if(Math.abs(vel) < 0.02) startSnap();
+  }
+  schedule();
+}
+function glide(){
+  if(snapping){
+    var k = Math.min(1, (performance.now() - snapT0) / 180);
+    var e = 1 - Math.pow(1 - k, 3);
+    center = snapFrom + (snapTo - snapFrom) * e;
+    if(k >= 1) snapping = false;
+    return;
+  }
+  if(Math.abs(vel) > 0.0005){
+    center += vel * 16;
+    vel *= 0.94;
+    if(Math.abs(vel) <= 0.0005){ vel = 0; startSnap(); }
+  }
+}
+function startSnap(){
+  if(following) return;
+  var target = Math.round(center / (15 * MIN)) * (15 * MIN);
+  if(target === center) return;
+  snapFrom = center; snapTo = target; snapT0 = performance.now(); snapping = true;
+}
+
+function setZoom(next, keepInstant, keepX){
+  var min = W / 168, max = W / 6;   // 7 days .. 6 hours across the screen
+  next = Math.max(min, Math.min(max, next));
+  if(next === pxh) return;
+  pxh = next;
+  if(keepInstant != null && keepX != null){
+    center = keepInstant - (keepX - W / 2) * msPerPx();
+    following = false;
+  }
+  schedule();
+}
+function onWheel(e){
+  if(!e.target.closest('.row')) return;
+  if(e.ctrlKey || e.metaKey){
+    e.preventDefault();
+    var x = e.clientX - trackLeft();
+    var at = center + (x - W / 2) * msPerPx();
+    setZoom(pxh * Math.pow(1.0035, -e.deltaY), at, x);
+    return;
+  }
+  var dx = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : 0;
+  if(!dx) return;
+  e.preventDefault();
+  following = false;
+  center += dx * msPerPx();
+  vel = 0; snapping = false;
+  schedule();
+}
+function onKey(e){
+  var step = e.shiftKey ? 24 * HOUR : HOUR;
+  if(e.key === 'ArrowLeft'){ center -= step; following = false; }
+  else if(e.key === 'ArrowRight'){ center += step; following = false; }
+  else if(e.key === 'Home'){ following = true; center = Date.now(); }
+  else return;
+  e.preventDefault();
+  vel = 0; snapping = false;
+  schedule();
+}
+
+stack.addEventListener('pointerdown', onDown);
+stack.addEventListener('pointermove', onMove);
+stack.addEventListener('pointerup', onUp);
+stack.addEventListener('pointercancel', onUp);
+stack.addEventListener('wheel', onWheel, {passive:false});
+
+/* ---------------- controls ---------------- */
+function setFormat(v){
+  h24 = v;
+  try{ localStorage.setItem('eztz.h24', v ? '1' : '0'); }catch(e){}
+  document.getElementById('f12').setAttribute('aria-pressed', v ? 'false' : 'true');
+  document.getElementById('f24').setAttribute('aria-pressed', v ? 'true' : 'false');
+  builtCenter = null;          // tick labels change, so the strips must repaint
+  schedule();
+}
+document.getElementById('f12').addEventListener('click', function(){ setFormat(false); });
+document.getElementById('f24').addEventListener('click', function(){ setFormat(true); });
+document.getElementById('zin').addEventListener('click', function(){ setZoom(pxh * 1.5, center, W / 2); });
+document.getElementById('zout').addEventListener('click', function(){ setZoom(pxh / 1.5, center, W / 2); });
+nowBtn.addEventListener('click', function(){
+  following = true; vel = 0; snapping = false; center = Date.now(); schedule();
+});
+document.getElementById('share').addEventListener('click', function(){
+  var url = location.href.split('#')[0] + '#tz=' + encodeURIComponent(zones.join(',')) +
+            '&t=' + Math.round(center);
+  try{ history.replaceState(null, '', url); }catch(e){}
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(function(){ toast('Link copied'); },
+                                            function(){ toast('Link is in the address bar'); });
+  }else toast('Link is in the address bar');
+});
+var toastTimer = 0;
+function toast(msg){
+  toastEl.textContent = msg; toastEl.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ toastEl.hidden = true; }, 2200);
+}
+
+/* ---------------- picker ---------------- */
+function renderResults(){
+  var q = qEl.value;
+  if(!q.trim()){ resEl.hidden = true; resEl.innerHTML = ''; return; }
+  var hits = search(q).filter(function(z){ return zones.indexOf(z) < 0; });
+  if(!hits.length){
+    resEl.innerHTML = '<div class="empty">No zone matches &ldquo;' + q.replace(/[<>&]/g,'') + '&rdquo;.</div>';
+    resEl.hidden = false; return;
+  }
+  var html = [], i, z;
+  for(i = 0; i < hits.length; i++){
+    z = hits[i];
+    html.push('<button class="res" data-tz="' + z + '">' +
+      '<span><span class="rn">' + pretty(z) + '</span> <span class="rr">' + region(z) + '</span></span>' +
+      '<span class="ro">' + offsetLabel(offsetAt(z, Date.now())) + '</span></button>');
+  }
+  resEl.innerHTML = html.join('');
+  resEl.hidden = false;
+}
+qEl.addEventListener('input', renderResults);
+qEl.addEventListener('focus', renderResults);
+resEl.addEventListener('click', function(e){
+  var b = e.target.closest('.res');
+  if(!b) return;
+  if(zones.length >= 5){ toast('Five zones is the maximum'); return; }
+  zones.push(b.getAttribute('data-tz'));
+  save(); buildRows();
+  qEl.value = ''; resEl.hidden = true;
+  updatePickerState();
+});
+document.addEventListener('click', function(e){
+  if(!e.target.closest('.picker')) resEl.hidden = true;
+});
+function updatePickerState(){
+  var full = zones.length >= 5;
+  qEl.disabled = full;
+  qEl.placeholder = full ? 'Five zones — remove one to add another' : 'Add a city or timezone…';
+}
+
+/* ---------------- layout ---------------- */
+function layout(){
+  var t = rows.length ? rows[0].track : null;
+  if(!t) return;
+  var w = t.clientWidth;
+  if(!w) return;
+  var firstRun = !builtW;
+  var ratio = builtW ? w / builtW : 1;
+  W = w;
+  if(firstRun) pxh = W / 24;            // one day across the screen
+  else pxh = Math.max(W / 168, Math.min(W / 6, pxh * ratio));
+  builtCenter = null;
+  updatePickerState();
+  schedule();
+}
+if(window.ResizeObserver){
+  new ResizeObserver(function(){ layout(); }).observe(stack);
+}else window.addEventListener('resize', layout);
+
+window.addEventListener('hashchange', function(){
+  var h = readHash();
+  if(!h) return;
+  if(h.zones){ zones = h.zones; save(); buildRows(); }
+  if(h.t){ center = h.t; following = false; }
+  schedule();
+});
+
+load();
+try{ h24 = localStorage.getItem('eztz.h24') === '1'; }catch(e){}
+buildRows();
+setFormat(h24);
+setInterval(function(){ if(!raf) schedule(); }, 1000);
+schedule();
+})();
+</script>
