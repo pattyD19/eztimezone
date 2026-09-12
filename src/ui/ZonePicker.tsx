@@ -41,13 +41,23 @@ export function ZonePicker({ zones, canAdd, onAdd }: ZonePickerProps) {
       <input
         type="search"
         value={query}
-        disabled={!canAdd}
+        // readOnly rather than disabled: a disabled field is removed from the
+        // tab order, so a keyboard or screen-reader user never reaches it and
+        // never learns why they cannot add a zone. This stays focusable and
+        // says so, and the label carries the reason since a placeholder is not
+        // reliably announced when an aria-label is present.
+        readOnly={!canAdd}
+        aria-disabled={!canAdd}
         placeholder={
           canAdd
             ? 'Add a city or timezone…'
             : `${MAX_ZONES} zones — remove one to add another`
         }
-        aria-label="Search for a city or timezone"
+        aria-label={
+          canAdd
+            ? 'Search for a city or timezone'
+            : `Zone list is full at ${MAX_ZONES}. Remove a zone before adding another.`
+        }
         aria-expanded={showList}
         aria-controls={listId}
         autoComplete="off"
@@ -55,7 +65,7 @@ export function ZonePicker({ zones, canAdd, onAdd }: ZonePickerProps) {
           setQuery(e.target.value);
           setOpen(true);
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={() => canAdd && setOpen(true)}
         onKeyDown={(e) => {
           if (e.key === 'Escape') setOpen(false);
           if (e.key === 'Enter' && results[0]) choose(results[0]);

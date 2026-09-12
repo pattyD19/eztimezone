@@ -20,18 +20,20 @@
   --ink-3: #8c94a6;
   --line: #cdd3e0;
   --line-2: #e2e6ee;
-  --accent: #c8631f;
+  /* Control edges need 3:1 (WCAG 1.4.11); decorative dividers do not. */
+  --control-border: #7485a9;
+  --accent: #b65a1c;
   --accent-ink: #ffffff;
-  --accent-soft: rgba(200, 99, 31, 0.14);
+  --accent-soft: rgba(182, 90, 28, 0.14);
   --night: rgba(40, 52, 80, 0.15);
-  --work: rgba(200, 99, 31, 0.11);
+  --work: rgba(182, 90, 28, 0.11);
   --am: #1a5d77;
   --pm: #5c4189;
   --am-soft: rgba(26, 93, 119, 0.13);
   --pm-soft: rgba(92, 65, 137, 0.13);
-  --go: #2c6b4c;
-  --go-soft: rgba(44, 107, 76, 0.26);
-  --go-line: rgba(44, 107, 76, 0.55);
+  --go: #22523a;
+  --go-soft: rgba(36, 87, 62, 0.26);
+  --go-line: rgba(36, 87, 62, 0.55);
   --warn: #a3323f;
   --warn-soft: rgba(163, 50, 63, 0.11);
   --warn-line: rgba(163, 50, 63, 0.5);
@@ -49,6 +51,7 @@
     --ink-3: #6a7385;
     --line: #2b3240;
     --line-2: #212734;
+    --control-border: #596885;
     --accent: #ee9245;
     --accent-ink: #20150b;
     --accent-soft: rgba(238, 146, 69, 0.16);
@@ -78,6 +81,7 @@
   --ink-3: #6a7385;
   --line: #2b3240;
   --line-2: #212734;
+  --control-border: #596885;
   --accent: #ee9245;
   --accent-ink: #20150b;
   --accent-soft: rgba(238, 146, 69, 0.16);
@@ -145,7 +149,7 @@ button {
   font-weight: 500;
   color: var(--ink);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-border);
   border-radius: 7px;
   padding: 6px 11px;
   cursor: pointer;
@@ -324,7 +328,7 @@ button.primary:disabled {
 .meta {
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-size: 11px;
-  color: var(--ink-3);
+  color: var(--ink-2);
   white-space: nowrap;
 }
 
@@ -371,12 +375,18 @@ button.primary:disabled {
 
 .remove {
   position: absolute;
-  right: -8px;
-  top: -4px;
-  padding: 2px 7px;
+  right: -6px;
+  top: -6px;
+  /* WCAG 2.5.8 asks that a target be at least 24x24 CSS pixels. */
+  min-width: 24px;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   font-size: 15px;
-  line-height: 1.1;
-  color: var(--ink-3);
+  line-height: 1;
+  color: var(--ink-2);
   background: transparent;
   border: 0;
   opacity: 0;
@@ -418,7 +428,7 @@ button.primary:disabled {
 .ribbon-note {
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-size: 11px;
-  color: var(--ink-3);
+  color: var(--ink-2);
   white-space: nowrap;
 }
 .ribbon-jump {
@@ -594,7 +604,7 @@ button.primary:disabled {
   font-size: 9px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 
 /* ---- picker ---- */
@@ -608,13 +618,13 @@ input[type='search'] {
   font-size: 14px;
   color: var(--ink);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-border);
   border-radius: 8px;
   padding: 9px 12px;
   min-width: 0;
 }
 input[type='search']::placeholder {
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 input[type='search']:focus {
   outline: 2px solid var(--accent);
@@ -662,7 +672,7 @@ input[type='search']:disabled {
 }
 .result-region {
   font-size: 11.5px;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 .result-offset {
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
@@ -673,7 +683,7 @@ input[type='search']:disabled {
 .empty {
   margin: 0;
   padding: 10px;
-  color: var(--ink-3);
+  color: var(--ink-2);
   font-size: 13px;
 }
 
@@ -684,7 +694,7 @@ input[type='search']:disabled {
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-size: 10.5px;
   letter-spacing: 0.04em;
-  color: var(--ink-3);
+  color: var(--ink-2);
   user-select: text;
 }
 

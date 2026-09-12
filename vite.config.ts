@@ -77,7 +77,7 @@ export default defineConfig({
   // The time engine is pure and runs on Node's own ICU, so no DOM is needed.
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}'],

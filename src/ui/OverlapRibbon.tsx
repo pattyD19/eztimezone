@@ -99,7 +99,7 @@ export function OverlapRibbon({ zones, home, use24Hour }: OverlapRibbonProps) {
         <span className="ribbon-title">Good to meet</span>
         {renderNote()}
       </div>
-      <div className="ribbon-track">
+      <div className="ribbon-track" role="group" aria-label="Shared working hours">
         <div
           className="content"
           ref={contentRef}
@@ -113,6 +113,11 @@ export function OverlapRibbon({ zones, home, use24Hour }: OverlapRibbonProps) {
                 className="window"
                 style={{ left: (window.start - win.anchor) * scale, width }}
                 title={describe(window.start, window.end)}
+                // The block is a graphic: without a text alternative the whole
+                // feature is invisible to a screen reader, since neither the
+                // duration label nor its position conveys when the window is.
+                role="img"
+                aria-label={describe(window.start, window.end)}
               >
                 {width >= LABEL_MIN_PX && (
                   <span className="window-label">

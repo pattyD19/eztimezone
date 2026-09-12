@@ -262,6 +262,36 @@ into shallow DOM tests or into lowering the bar again. Naming the parts that
 must stay covered — `src/time/**`, `TimelineStore`, `share.ts`, `storage.ts` —
 says the same thing without punishing growth elsewhere.
 
+## Accessibility
+
+Contrast is enforced by `test/contrast.test.ts`, which parses the stylesheet and
+checks every text and control pairing in both themes against WCAG 2.2 AA. It is
+a test rather than a review because contrast is numeric and silently breakable:
+nudging one token a few points looks fine in a diff and can drop a label below
+readable.
+
+Two conventions came out of that:
+
+- **`--ink-3` is never text.** It is light enough to fail AA at the sizes used
+  here, so it is reserved for hour ticks and dividers — marks that carry no
+  information on their own. Anything meant to be *read* uses `--ink-2`. The
+  test enforces this directly.
+- **`--control-border` is separate from `--line`.** Control edges need 3:1
+  (WCAG 1.4.11); decorative dividers do not, and darkening every border to
+  satisfy the rule would have made the whole page heavier for nothing.
+
+Beyond colour: every strip is a focusable slider with arrow-key control and an
+`aria-valuetext` reading the zone, time and date; meeting windows carry a text
+alternative, without which the feature would be invisible to a screen reader;
+the zone field stays focusable when the list is full, since a `disabled` field
+is removed from the tab order and nobody would hear why they cannot add one; and
+targets meet the 24×24 minimum.
+
+**Known limitation.** The day, night and working-hours bands convey their meaning
+through colour alone. The same information is available from the hour labels and
+the ribbon, so nothing is only in the shading — but the shading itself has no
+non-colour alternative.
+
 ## CI
 
 `.github/workflows/ci.yml` runs typecheck, tests and build on pushes to `main`
