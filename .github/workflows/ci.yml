@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push makes an in-flight run for the same ref pointless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: typecheck, test, build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # .nvmrc is the single source of truth; Netlify reads it too, so CI
+          # and the deploy build can never disagree about the Node version.
+          node-version-file: .nvmrc
+          cache: npm
+
+      # ci, not install: installs exactly the lockfile and fails if the two
+      # have drifted, which is the point of running this at all.
+      - run: npm ci
+
+      # Kept as separate steps so a failure says which thing broke, rather
+      # than "the build failed".
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

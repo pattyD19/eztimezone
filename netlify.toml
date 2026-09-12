@@ -10,10 +10,9 @@
   command = "npm test && npm run build"
   publish = "dist"
 
-[build.environment]
-  # Pinned so a change to Netlify's default cannot alter a build. Vite 8 needs
-  # Node ^20.19 or >=22.12; 22 is LTS and always available here.
-  NODE_VERSION = "22"
+# The Node version is not set here on purpose. Netlify reads .nvmrc, and so
+# does the GitHub Actions workflow, so there is one pinned version rather than
+# two that can drift apart. Vite 8 needs Node ^20.19 or >=22.12.
 
 # Deploy previews for pull requests build the same way as production. The build
 # stamp picks up COMMIT_REF, so a preview shows the commit it was built from.

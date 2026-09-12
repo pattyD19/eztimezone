@@ -223,6 +223,21 @@ setting it you get a worker that 404s on every precached file.
   it is pure arithmetic with an injectable clock, and two of the bugs found so
   far lived in it.
 
+## CI
+
+`.github/workflows/ci.yml` runs typecheck, tests and build on pushes to `main`
+and on every pull request. The steps are kept separate so a failure names what
+broke rather than reporting "the build failed", and `npm ci` is used rather than
+`npm install` so a lockfile that has drifted from `package.json` fails the run.
+
+This overlaps with Netlify, which runs `npm test && npm run build` before it
+deploys — deliberately. They answer different questions: the Netlify gate
+decides whether to publish, while the Action gives a status check on commits and
+pull requests, including from forks, where nothing is being deployed at all.
+
+Node is pinned in `.nvmrc`, which both Netlify and the workflow read, so the two
+cannot disagree about it.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
