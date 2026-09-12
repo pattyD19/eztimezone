@@ -11,7 +11,7 @@ function isStringArray(value: unknown): value is string[] {
 }
 
 /** Drop unknown zones, de-duplicate, and pin the home zone to the top. */
-function reconcile(candidates: readonly string[], home: string): string[] {
+export function reconcile(candidates: readonly string[], home: string): string[] {
   const valid = candidates
     .map((id) => normalizeZone(id))
     .filter((id): id is string => id !== null);

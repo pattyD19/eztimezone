@@ -78,5 +78,12 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}'],
+      // Type-only declarations and the entry point have nothing to execute.
+      exclude: ['src/**/*.test.ts', 'src/vite-env.d.ts', 'src/main.tsx'],
+      reporter: ['text', 'html'],
+    },
   },
 });

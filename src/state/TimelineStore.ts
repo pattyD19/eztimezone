@@ -311,7 +311,7 @@ export class TimelineStore {
 
   private scheduleIdleTick(): void {
     if (this.idleTimer) return;
-    this.idleTimer = window.setTimeout(() => {
+    this.idleTimer = setTimeout(() => {
       this.idleTimer = 0;
       this.requestFrame();
     }, IDLE_TICK_MS);
@@ -337,7 +337,7 @@ export class TimelineStore {
 
   destroy(): void {
     if (this.rafId) cancelAnimationFrame(this.rafId);
-    if (this.idleTimer) window.clearTimeout(this.idleTimer);
+    if (this.idleTimer) clearTimeout(this.idleTimer);
     this.rafId = 0;
     this.idleTimer = 0;
     this.frameListeners.clear();

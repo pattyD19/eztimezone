@@ -223,6 +223,37 @@ setting it you get a worker that 404s on every precached file.
   it is pure arithmetic with an injectable clock, and two of the bugs found so
   far lived in it.
 
+## Tests
+
+```bash
+npm test        # 169 tests
+npm run coverage
+```
+
+Coverage is deliberately uneven, and the headline number is not the point:
+
+| | |
+|---|---|
+| `src/time/` | ~99% — the timezone and interval maths |
+| `src/state/TimelineStore.ts` | ~93% |
+| `src/lib/share.ts`, `storage.ts` | 100% |
+| `src/ui/`, the React hooks | 0% |
+
+The rule is to test where a mistake is both likely and invisible. Timezone
+arithmetic qualifies twice over: an off-by-an-hour in a DST edge case looks
+entirely plausible on screen. `TimelineStore` qualifies because two real bugs
+have already lived there — inertia held in the wrong units, and a method passed
+unbound to React — and neither was the sort of thing reading the code caught.
+
+The UI is left to browser verification instead. Its components are mostly
+rendering, and DOM tests would cost a jsdom setup to assert things a screenshot
+settles faster. That is a trade, not an oversight: it means a regression in
+layout or gesture handling will not be caught by CI.
+
+`TimelineStore` is tested against a hand-driven frame queue and fake clock
+rather than a DOM, which makes inertia and easing deterministic instead of
+dependent on how fast the suite happens to run.
+
 ## CI
 
 `.github/workflows/ci.yml` runs typecheck, tests and build on pushes to `main`
