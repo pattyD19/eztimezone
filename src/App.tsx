@@ -39,6 +39,10 @@ export function App() {
           <h2>How it reads</h2>
           <ul>
             <li>
+              The green ribbon is every span where all your zones are inside working hours,
+              weekends excluded. Hover one for the exact times in your own zone.
+            </li>
+            <li>
               One shared instant drives every row. Hour ticks are computed per zone, so
               half-hour offsets like Kolkata sit where they really are rather than snapping
               to the row above.

@@ -104,6 +104,16 @@ export class TimelineStore {
     return HOUR / this.pxPerHour;
   }
 
+  /**
+   * The span actually on screen, as opposed to the wider span that is painted.
+   * Anything reported to the user as "in view" has to be measured against this
+   * one, or it will describe strips they cannot see.
+   */
+  visibleSpan = (): { start: number; end: number } => {
+    const half = this.screenMs() / 2;
+    return { start: this.centre - half, end: this.centre + half };
+  };
+
   private screenMs(): number {
     return (this.width * HOUR) / this.pxPerHour;
   }

@@ -87,6 +87,8 @@ export interface Band {
   start: number;
   end: number;
   kind: BandKind;
+  /** Local weekday (0 = Sunday) of the day this band belongs to. */
+  weekday: number;
 }
 
 export interface Strip {
@@ -118,11 +120,57 @@ function clampBand(
   localEnd: number,
   seg: Segment,
   kind: BandKind,
+  weekday: number,
   out: Band[],
 ): void {
   const start = Math.max(localStart - seg.offset, seg.start);
   const end = Math.min(localEnd - seg.offset, seg.end);
-  if (end > start) out.push({ start, end, kind });
+  if (end > start) out.push({ start, end, kind, weekday });
+}
+
+/**
+ * Day and night shading for a set of constant-offset segments.
+ *
+ * Split out from `buildStrip` because the meeting-overlap calculation needs
+ * exactly these intervals and must not get them from a second, drifting
+ * implementation.
+ */
+export function bandsFromSegments(
+  segments: readonly Segment[],
+  options: StripOptions = {},
+): Band[] {
+  const opts = { ...DEFAULTS, ...options };
+  const bands: Band[] = [];
+
+  for (const seg of segments) {
+    // Walked in local days so the bands follow the wall clock across a
+    // transition rather than drifting by an hour.
+    const firstMidnight = Math.floor((seg.start + seg.offset) / DAY) * DAY;
+    for (let local = firstMidnight; local - seg.offset < seg.end; local += DAY) {
+      const weekday = new Date(local).getUTCDay();
+      clampBand(local, local + opts.nightEnd * HOUR, seg, 'night', weekday, bands);
+      clampBand(local + opts.nightStart * HOUR, local + DAY, seg, 'night', weekday, bands);
+      clampBand(
+        local + opts.workStart * HOUR,
+        local + opts.workEnd * HOUR,
+        seg,
+        'work',
+        weekday,
+        bands,
+      );
+    }
+  }
+  return bands;
+}
+
+/** Shading bands for a zone across a span. */
+export function bandsOf(
+  tz: string,
+  start: number,
+  end: number,
+  options: StripOptions = {},
+): Band[] {
+  return bandsFromSegments(segmentsOf(tz, start, end), options);
 }
 
 /**
@@ -136,21 +184,11 @@ export function buildStrip(
   end: number,
   options: StripOptions = {},
 ): Strip {
-  const opts = { ...DEFAULTS, ...options };
   const segments = segmentsOf(tz, start, end);
+  const bands = bandsFromSegments(segments, options);
   const ticks: Tick[] = [];
-  const bands: Band[] = [];
 
   for (const seg of segments) {
-    // Bands, walked in local days so they follow the wall clock across a
-    // transition rather than drifting by an hour.
-    const firstMidnight = Math.floor((seg.start + seg.offset) / DAY) * DAY;
-    for (let local = firstMidnight; local - seg.offset < seg.end; local += DAY) {
-      clampBand(local, local + opts.nightEnd * HOUR, seg, 'night', bands);
-      clampBand(local + opts.nightStart * HOUR, local + DAY, seg, 'night', bands);
-      clampBand(local + opts.workStart * HOUR, local + opts.workEnd * HOUR, seg, 'work', bands);
-    }
-
     // Hour ticks at local boundaries.
     const firstHour = Math.ceil((seg.start + seg.offset) / HOUR) * HOUR;
     for (let local = firstHour; local - seg.offset < seg.end; local += HOUR) {

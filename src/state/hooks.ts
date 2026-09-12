@@ -1,4 +1,4 @@
-import { useEffect, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useTimeline } from './timelineContext';
 import type { TimelineWindow } from './TimelineStore';
 
@@ -12,6 +12,30 @@ export function useTimelineWindow(): TimelineWindow {
 export function useFollowing(): boolean {
   const store = useTimeline();
   return useSyncExternalStore(store.subscribeChrome, store.getFollowing, store.getFollowing);
+}
+
+/**
+ * The visible span, sampled rather than tracked continuously.
+ *
+ * Unlike the painted window this changes on every frame, so it is deliberately
+ * coarse: updates are throttled, and ignored entirely until the span has moved
+ * far enough to change anything a person would read. That keeps a component
+ * which merely *describes* the view from re-rendering sixty times a second.
+ */
+export function useVisibleSpan(minimumShiftMs = 60_000): { start: number; end: number } {
+  const store = useTimeline();
+  const [span, setSpan] = useState(store.visibleSpan);
+
+  useFrame(() => {
+    const next = store.visibleSpan();
+    setSpan((previous) => {
+      const zoomed = next.end - next.start !== previous.end - previous.start;
+      const moved = Math.abs(next.start - previous.start) >= minimumShiftMs;
+      return zoomed || moved ? next : previous;
+    });
+  });
+
+  return span;
 }
 
 /**

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useFrame } from '../state/hooks';
 import { useTimeline } from '../state/timelineContext';
 import { useTimelineGestures } from '../state/useTimelineGestures';
+import { OverlapRibbon } from './OverlapRibbon';
 import { ZoneRow } from './ZoneRow';
 
 export interface TimelineProps {
@@ -59,6 +60,7 @@ export function Timeline({ zones, home, use24Hour, onRemove }: TimelineProps) {
   return (
     <div className="stack" ref={surfaceRef}>
       <div className="rows" ref={rowsRef}>
+        <OverlapRibbon zones={zones} home={home} use24Hour={use24Hour} />
         {zones.map((tz, i) => (
           <ZoneRow
             key={tz}
