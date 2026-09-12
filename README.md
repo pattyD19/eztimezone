@@ -24,6 +24,7 @@ src/
     format.ts    UTC offsets and wall-clock formatting
     ticks.ts     tick grids and shading bands, DST-aware
     zones.ts     the zone catalogue and its search
+    overlap.ts   interval arithmetic for the meeting ribbon
   state/
     TimelineStore.ts      the shared instant and scale; a plain observable
     useTimelineGestures.ts  pointer, wheel and pinch handling
@@ -31,6 +32,32 @@ src/
   ui/        Timeline, ZoneRow, Toolbar, ZonePicker
   lib/       storage and share-link helpers
 ```
+
+## The meeting ribbon
+
+The green band above the strips is every span where *all* your zones are inside
+working hours. It is the answer to the question people actually open a timezone
+tool to ask, and it is plain interval arithmetic over the same bands the strips
+are drawn from, so the two can never disagree.
+
+Weekends are excluded, per zone and per local day — when Sydney is in Monday's
+working hours, London is still on Sunday evening and no meeting is happening.
+Windows shorter than thirty minutes are dropped.
+
+Two details carry most of the value:
+
+- **Merging touches, not just overlaps.** A working day containing a DST change
+  is emitted as two abutting bands, one per constant-offset segment. Unmerged,
+  they intersect into two windows with a zero-width seam, and the ribbon shows a
+  hairline gap on exactly the day people most need to get right.
+- **"None" is never the answer.** When nothing is in view the ribbon offers the
+  next window as a button that scrolls you to it, and when two weeks of
+  lookahead find nothing it says so plainly — Los Angeles and London genuinely
+  never share a nine-to-five, and the app should say that rather than shrug.
+
+Note that what is *counted* is measured against the visible span, while what is
+*drawn* covers the whole painted buffer. Counting the buffer would announce
+"1 window" over an empty ribbon whenever the nearest one sat just off screen.
 
 ## Three things worth knowing before changing this
 
@@ -94,3 +121,9 @@ cannot end up serving the dev server.
 - City search covers ~420 IANA zones plus a hand-written alias table, so
   mid-size cities are not found. Expanding it means either more aliases or
   bundling a real city dataset.
+- Working hours are 09:00-17:00 everywhere. `StripOptions` and `MeetingOptions`
+  both already take `workStart`/`workEnd`, so making them per-zone and editable
+  is a UI job, not an engine one.
+- `state/`, `ui/` and `lib/` have no tests. `TimelineStore` is the obvious gap:
+  it is pure arithmetic with an injectable clock, and two of the bugs found so
+  far lived in it.

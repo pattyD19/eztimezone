@@ -3,6 +3,7 @@ import { HOUR, deltaLabel, formatClock, formatDate, hourLabel, offsetAt, offsetL
 import { buildStrip, labelInterval } from '../time/ticks';
 import { zoneLabel } from '../time/zones';
 import { useFrame, useTimelineWindow } from '../state/hooks';
+import { useStripTransform } from '../state/useStripTransform';
 import { useTimeline } from '../state/timelineContext';
 
 interface StripProps {
@@ -75,26 +76,14 @@ export function ZoneRow({ tz, home, isHome, use24Hour, onRemove, trackRef }: Zon
   const store = useTimeline();
   const win = useTimelineWindow();
 
-  const contentRef = useRef<HTMLDivElement>(null);
+  const contentRef = useStripTransform(win.anchor);
   const trackEl = useRef<HTMLDivElement>(null);
   const timeRef = useRef<HTMLSpanElement>(null);
   const meridiemRef = useRef<HTMLSpanElement>(null);
   const dateRef = useRef<HTMLSpanElement>(null);
   const metaRef = useRef<HTMLSpanElement>(null);
 
-  /**
-   * The anchor the DOM currently reflects. On a repaint the store's window
-   * changes one frame before React commits the new ticks, so positioning
-   * against the *rendered* anchor is what keeps content and transform in step.
-   */
-  const renderedAnchor = useRef(win.anchor);
-
   const paint = useCallback(() => {
-    const content = contentRef.current;
-    if (content) {
-      content.style.transform = `translate3d(${store.xOf(renderedAnchor.current).toFixed(2)}px, 0, 0)`;
-    }
-
     const instant = store.getCentre();
     const offset = offsetAt(tz, instant);
     const wall = wallFromOffset(instant, offset);
@@ -125,12 +114,9 @@ export function ZoneRow({ tz, home, isHome, use24Hour, onRemove, trackRef }: Zon
     }
   }, [store, tz, home, isHome, use24Hour]);
 
-  // Runs after every render, synchronously before paint, so a repaint never
-  // shows new ticks at the old offset.
-  useLayoutEffect(() => {
-    renderedAnchor.current = win.anchor;
-    paint();
-  });
+  // Readouts are painted on every render as well as every frame, so a newly
+  // added row is never blank for a beat.
+  useLayoutEffect(paint);
 
   useFrame(paint);
 

@@ -29,6 +29,9 @@
   --pm: #5c4189;
   --am-soft: rgba(26, 93, 119, 0.13);
   --pm-soft: rgba(92, 65, 137, 0.13);
+  --go: #2c6b4c;
+  --go-soft: rgba(44, 107, 76, 0.26);
+  --go-line: rgba(44, 107, 76, 0.55);
   --shadow: 0 1px 2px rgba(18, 21, 28, 0.06), 0 10px 28px -16px rgba(18, 21, 28, 0.3);
 }
 
@@ -52,6 +55,9 @@
     --pm: #b49ae6;
     --am-soft: rgba(124, 196, 218, 0.15);
     --pm-soft: rgba(180, 154, 230, 0.15);
+    --go: #74cf9e;
+    --go-soft: rgba(116, 207, 158, 0.26);
+    --go-line: rgba(116, 207, 158, 0.55);
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 28px -16px rgba(0, 0, 0, 0.8);
   }
 }
@@ -75,6 +81,9 @@
   --pm: #b49ae6;
   --am-soft: rgba(124, 196, 218, 0.15);
   --pm-soft: rgba(180, 154, 230, 0.15);
+  --go: #74cf9e;
+  --go-soft: rgba(116, 207, 158, 0.26);
+  --go-line: rgba(116, 207, 158, 0.55);
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 28px -16px rgba(0, 0, 0, 0.8);
 }
 
@@ -309,6 +318,84 @@ button.primary:disabled {
 }
 .remove:hover {
   color: var(--ink);
+}
+
+/* ---- overlap ribbon ----
+   Sits inside .rows so it shares the strips' coordinate space exactly, and so
+   the playhead runs through it: you can see at a glance whether the moment you
+   have picked falls inside a window. */
+.ribbon {
+  padding-bottom: 10px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--line);
+}
+.ribbon-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 5px;
+  position: relative;
+  z-index: 3;
+}
+.ribbon-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--go);
+}
+.ribbon-note {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.ribbon-jump {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--go);
+  background: var(--go-soft);
+  border: 0;
+  border-radius: 4px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+.ribbon-jump:hover {
+  background: var(--go-line);
+}
+.ribbon-track {
+  position: relative;
+  height: 22px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: var(--sunk);
+  touch-action: none;
+  cursor: grab;
+}
+.stack.is-dragging .ribbon-track {
+  cursor: grabbing;
+}
+.window {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--go-soft);
+  box-shadow: inset 0 0 0 1px var(--go-line);
+  border-radius: 4px;
+}
+.window-label {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--go);
+  white-space: nowrap;
+  padding: 0 4px;
 }
 
 /* ---- strips ---- */
@@ -569,6 +656,9 @@ input[type='search']:disabled {
   }
   .track {
     height: 46px;
+  }
+  .ribbon-track {
+    height: 20px;
   }
   .remove {
     opacity: 1;
