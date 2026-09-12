@@ -2,6 +2,8 @@
 
 **Live: https://eztimezone.netlify.app**
 
+![EzTimeZone at a glance](docs/highlights.jpg)
+
 Compare the time across up to five timezones on one shared, scrollable timeline.
 Drag any strip and all of them move together; the playhead marks the moment
 you have picked, and each row reads it in its own local time.
@@ -306,6 +308,24 @@ pull requests, including from forks, where nothing is being deployed at all.
 
 Node is pinned in `.nvmrc`, which both Netlify and the workflow read, so the two
 cannot disagree about it.
+
+## The summary slide
+
+`docs/EzTimeZone-highlights.pptx` is a single slide of project highlights, built
+by `docs/make-slide.cjs`:
+
+```bash
+npm i --no-save pptxgenjs && node docs/make-slide.cjs
+```
+
+pptxgenjs is deliberately **not** a devDependency. CI installs the lockfile on
+every run and would carry a couple of megabytes it never uses, for an artefact
+that changes about once a release. The `.cjs` extension is because the package
+is `type: module` and pptxgenjs is CommonJS.
+
+Every figure on it is measured rather than estimated — line counts from
+`git ls-files` excluding blanks, coverage from the v8 report, bundle size
+gzipped from `dist/`. Re-measure before changing them.
 
 ## License
 
